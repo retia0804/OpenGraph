@@ -748,9 +748,19 @@ def class_objects(
                 input_text = result["generation"]["content"]
                 pattern = r"\[([^]]+)\]"  # 匹配方括号中的内容
                 match = re.search(pattern, input_text)
-                extracted_content = []
+                extracted_content = ""  # 빈 문자열로 초기화
                 if match:
                     extracted_content = match.group(1)
+                else:
+                    # match가 없을 경우 sbert를 사용하여 처리
+                    caption_ft = sbert_model.encode(input_text, convert_to_tensor=True)
+                    caption_ft = caption_ft / caption_ft.norm(dim=-1, keepdim=True)
+                    caption_ft = caption_ft.squeeze()
+                    similarities = F.cosine_similarity(
+                        class_name_fts, caption_ft.unsqueeze(0), dim=-1
+                    )
+                    max_indices = torch.argmax(similarities)
+                    extracted_content = class_names_sk[max_indices]
             # 如果llama生成的特征没有在给定列表中，则使用sbert特征配准
             if extracted_content not in class_colors_sk_disk:
                 extracted_content_ft = sbert_model.encode(
@@ -809,9 +819,21 @@ def class_objects(
                     input_text = result["generation"]["content"]
                     pattern = r"\[([^]]+)\]"  # 匹配方括号中的内容
                     match = re.search(pattern, input_text)
-                    extracted_content = []
+                    extracted_content = ""  # 빈 문자열로 초기화
                     if match:
                         extracted_content = match.group(1)
+                    else:
+                        # match가 없을 경우 sbert를 사용하여 처리
+                        caption_ft = sbert_model.encode(
+                            input_text, convert_to_tensor=True
+                        )
+                        caption_ft = caption_ft / caption_ft.norm(dim=-1, keepdim=True)
+                        caption_ft = caption_ft.squeeze()
+                        similarities = F.cosine_similarity(
+                            class_name_fts, caption_ft.unsqueeze(0), dim=-1
+                        )
+                        max_indices = torch.argmax(similarities)
+                        extracted_content = class_names_sk[max_indices]
                 # 如果llama生成的特征没有在给定列表中，则使用sbert特征配准
                 if extracted_content not in class_colors_sk_disk:
                     extracted_content_ft = sbert_model.encode(

@@ -76,13 +76,13 @@ pip install git+https://github.com/meta-llama/llama.git
 
 ```
 mkdir -p thirdparties/MinkowskiEngine/MinkowskiEngineBackend
-pip install -e thirdparties/MinkowskiEngine
+pip install -v -e thirdparties/MinkowskiEngine
 ```
 
 ## 4DMOS 설치
 
 ```
-make -C thirdparties/4DMOS install
+make -d -C thirdparties/4DMOS install
 ```
 
 # 실행

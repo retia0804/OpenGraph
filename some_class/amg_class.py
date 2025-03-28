@@ -204,7 +204,17 @@ class MyAutomaticMaskGenerator:
         )
         concepts, scores = [x for x in (concepts, scores)]
         # 推理captions
-        sem_tokens = outputs["sem_tokens"][mask_index].unsqueeze_(1)
+        sem_tokens = outputs["sem_tokens"][mask_index]
+        # 차원 조정 - visual_tokens는 (batch_size, seq_len, hidden_dim) 형태여야 함
+        if len(sem_tokens.shape) == 3:
+            # 이미 올바른 형태
+            pass
+        elif len(sem_tokens.shape) == 4:
+            # (batch_size, num_heads, seq_len, head_dim) -> (batch_size, seq_len, hidden_dim)
+            batch_size, num_heads, seq_len, head_dim = sem_tokens.shape
+            sem_tokens = sem_tokens.transpose(1, 2).reshape(
+                batch_size, seq_len, num_heads * head_dim
+            )
         captions = self.tap_model.generate_text(sem_tokens)
         caption_fts = self.sbert_model.encode(
             captions, convert_to_tensor=True, device="cuda"
