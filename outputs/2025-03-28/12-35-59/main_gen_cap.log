@@ -1,0 +1,2 @@
+[2025-03-28 12:36:06,192][root][INFO] - Reloaded SentencePiece model from /home/retia/miniconda3/envs/opengraph-custom/lib/python3.10/site-packages/tokenize_anything/modeling/text_tokenizer.model
+[2025-03-28 12:36:06,192][root][INFO] - #words: 32000 - BOS ID: 1 - EOS ID: 2

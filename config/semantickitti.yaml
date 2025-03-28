@@ -13,7 +13,7 @@ save_cap_path: ../results/${sequence}/caption/
 tag2text_path: /home/retia/Documents/Simple-OpenGraph/weights/tag2text_swin_14m.pth
 gd_path: /home/retia/Documents/Simple-OpenGraph/thirdparties/GroundingDINO/groundingdino/config/GroundingDINO_SwinT_OGC.py
 gd_weights: /home/retia/Documents/Simple-OpenGraph/weights/groundingdino_swint_ogc.pth
-tap_path: /home/retia/Documents/Simple-OpenGraph/weights/tap_vit_l_03f8ec.pkl
+tap_path: /home/retia/Documents/Simple-OpenGraph/weights/tap_vit_l_v1_0.pkl
 tap_merge_path: /home/retia/Documents/Simple-OpenGraph/weights/merged_2560.pkl
 sbert_path: /home/retia/Documents/Simple-OpenGraph/weights/all-MiniLM-L6-v2
 

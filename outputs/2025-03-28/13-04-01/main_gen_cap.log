@@ -1,0 +1,4 @@
+[2025-03-28 13:04:10,753][root][INFO] - Reloaded SentencePiece model from /home/retia/miniconda3/envs/opengraph-custom/lib/python3.10/site-packages/tokenize_anything/modeling/text_tokenizer.model
+[2025-03-28 13:04:10,753][root][INFO] - #words: 32000 - BOS ID: 1 - EOS ID: 2
+[2025-03-28 13:04:12,427][sentence_transformers.SentenceTransformer][INFO] - Use pytorch device_name: cuda
+[2025-03-28 13:04:12,427][sentence_transformers.SentenceTransformer][INFO] - Load pretrained SentenceTransformer: /home/retia/Documents/Simple-OpenGraph/weights/all-MiniLM-L6-v2

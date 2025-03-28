@@ -79,3 +79,9 @@ pip install -e thirdparties/MinkowskiEngine
 ```
 make -C thirdparties/4DMOS install
 ```
+
+# 실행
+
+```
+PYTHONPATH=$(pwd) python script/main_gen_cap.py
+```
