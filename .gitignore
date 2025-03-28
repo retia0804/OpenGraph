@@ -1,1 +1,5 @@
-weights/*
+# 가중치 폴더
+weights/
+
+# 출력 결과물
+outputs/
