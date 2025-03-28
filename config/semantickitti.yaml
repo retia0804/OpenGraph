@@ -38,7 +38,7 @@ caption_weight: 0.2 # caption相似性的权重
 ft_weight: 0.4 # 特征相似性的权重
 sim_threshold: 0.6 # 整合相似性得分的阈值
 llama_ckpt_dir: "/home/retia/Documents/Simple-OpenGraph/weights/Llama-2-7b-chat/" # llama ckpt路径
-llama_tokenizer_path: "/home/retia/Documents/Simple-OpenGraph/weights/Llam2-2.7b-chat/tokenizer.model" # llama 分词器路径
+llama_tokenizer_path: "/home/retia/Documents/Simple-OpenGraph/weights/Llama-2-7b-chat/tokenizer.model" # llama 分词器路径
 llama_max_seq_len: 512 # llama 最大输入token长度
 llama_max_batch_size: 8 # llama 最大dialog处理数目
 caption_merge_ft: !!bool True # 融合完成caption之后是否计算其特征

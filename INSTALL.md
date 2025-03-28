@@ -59,23 +59,28 @@ pip install git+https://github.com/baaivision/tokenize-anything.git
 ```
 
 ## SBERT 설치
+
 ```
 pip install -U sentence-transformers
 ```
 
 ## LLAMA 설치
+
 ```
 pip install git+https://github.com/meta-llama/llama.git
 ```
 
 ## MinkowskiEngine 설치 (4DMOS 의존성 패키지)
+
 `MinkowskiEngineBackend` 폴더가 없으면 빌드 과정 중 실패함.
+
 ```
 mkdir -p thirdparties/MinkowskiEngine/MinkowskiEngineBackend
 pip install -e thirdparties/MinkowskiEngine
 ```
 
 ## 4DMOS 설치
+
 ```
 make -C thirdparties/4DMOS install
 ```
@@ -84,4 +89,7 @@ make -C thirdparties/4DMOS install
 
 ```
 PYTHONPATH=$(pwd) python script/main_gen_cap.py
+PYTHONPATH=$(pwd) torchrun --nproc_per_node=1 script/main_gen_pc.py
+PYTHONPATH=$(pwd) python script/build_scenegraph.py
+PYTHONPATH=$(pwd) python script/visualize.py
 ```

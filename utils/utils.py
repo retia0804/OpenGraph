@@ -4,6 +4,7 @@
 """
 
 import sys
+import copy
 
 sys.path.append("/code1/dyn/github_repos/OpenGraph")
 import numpy as np
@@ -456,13 +457,37 @@ def merge_objects(cfg, objects: MapObjectList):
 
 def transform_point_cloud(past_point_clouds, from_pose, to_pose):
     """
-    把tensor点云正常映射到全局坐标
+    점운을 좌표 변환합니다. numpy 배열 또는 torch 텐서를 입력으로 받습니다.
+    Args:
+        past_point_clouds: 변환할 점군 (N, 3) 또는 (N, 4) 또는 (N, 5)
+        from_pose: 원본 좌표계의 변환 행렬 (4, 4)
+        to_pose: 목표 좌표계의 변환 행렬 (4, 4)
+    Returns:
+        변환된 점군 (N, 3)
     """
+    # numpy 배열인 경우 torch 텐서로 변환
+    if isinstance(past_point_clouds, np.ndarray):
+        past_point_clouds = torch.from_numpy(past_point_clouds.astype(np.float32))
+
     transformation = torch.Tensor(np.linalg.inv(to_pose) @ from_pose)
     NP = past_point_clouds.shape[0]
-    xyz1 = torch.hstack([past_point_clouds, torch.ones(NP, 1)]).T
-    past_point_clouds = (transformation @ xyz1).T[:, :3]
-    return past_point_clouds
+
+    # 점군이 3차원보다 큰 경우 (x,y,z,...)
+    if past_point_clouds.shape[1] > 3:
+        past_point_clouds = past_point_clouds[:, :3]
+
+    # 점군을 동차 좌표로 변환 (Nx3 -> Nx4)
+    xyz1 = torch.hstack(
+        [past_point_clouds, torch.ones(NP, 1).type_as(past_point_clouds)]
+    )
+
+    # 변환 행렬과 점군을 곱함 (4x4 @ Nx4 -> Nx4)
+    transformed = (transformation @ xyz1.T).T
+
+    # 동차 좌표에서 3D 좌표로 변환 (Nx4 -> Nx3)
+    transformed = transformed[:, :3]
+
+    return transformed
 
 
 def timestamp_tensor(tensor, time):
@@ -477,97 +502,53 @@ def timestamp_tensor(tensor, time):
 
 def accumulate_pc(cfg, mos_model, pc, pose, his_pcs, his_poses):
     """
-    输入当前帧的点云、位姿和历史累计帧的点云和位姿
+    누적된 포인트 클라우드를 생성하고 동적 객체를 필터링합니다.
+    Args:
+        cfg: 설정
+        mos_model: 동적 객체 감지 모델
+        pc: 현재 프레임의 포인트 클라우드 (N, 3)
+        pose: 현재 프레임의 포즈
+        his_pcs: 이전 프레임들의 포인트 클라우드 리스트
+        his_poses: 이전 프레임들의 포즈 리스트
+    Returns:
+        누적된 포인트 클라우드
     """
-    # 不需要强度值
-    pc = pc[:, :3]
-    his_pcs = [arr[:, :3] for arr in his_pcs]
-    # all_pcs和all_poses按照时间顺序反着来[9,8,7,...,0]，其中9对应当前帧
-    all_pcs = []
-    all_poses = []
-    # 将当前帧的点云和位姿插入到列表的开头
-    all_pcs.insert(0, pc)
-    all_pcs.extend(his_pcs)
-    all_poses.insert(0, pose)
-    all_poses.extend(his_poses)
-    if cfg.filter_dynamic:
-        # his_pcs和his_poses都是按照时间顺序来[0,1,2,...,9]，其中9对应当前帧
-        his_pcs_copy = all_pcs[:]
-        his_poses_copy = all_poses[:]
-        his_pcs_copy.reverse()
-        his_poses_copy.reverse()
-        his_pcs_copy = [torch.tensor(arr) for arr in his_pcs_copy]
-        list_his_pcs = his_pcs_copy
-        # 把位姿对齐
-        inv_frame0 = np.linalg.inv(his_poses_copy[0])
-        new_poses = []
-        for pose in his_poses_copy:
-            new_poses.append(inv_frame0.dot(pose))
-        poses = np.array(new_poses)
-        # 计算这最近十帧点云的动态物体
-        for i, pcd in enumerate(list_his_pcs):
-            from_pose = poses[i]
-            to_pose = poses[-1]
-            pcd = transform_point_cloud(pcd, from_pose, to_pose)
-            time_index = i - cfg.stride + 1
-            timestamp = round(time_index * 0.1, 3)
-            list_his_pcs[i] = timestamp_tensor(pcd, timestamp)
-        past_point_clouds = torch.cat(list_his_pcs, dim=0)
-        past_point_clouds = past_point_clouds.to("cuda")
-        past_point_clouds_list = []
-        past_point_clouds_list.append(past_point_clouds)
-        out = mos_model.forward(past_point_clouds_list)
-        for step in range(cfg.stride):
-            coords = out.coordinates_at(0)
-            logits = out.features_at(0)
-            t = round(-step * 0.1, 3)
-            mask = coords[:, -1].isclose(torch.tensor(t))
-            masked_logits = logits[mask]
-            masked_logits[:, [0]] = -float("inf")
-            pred_softmax = F.softmax(masked_logits, dim=1)
-            pred_softmax = pred_softmax.detach().cpu().numpy()
-            assert pred_softmax.shape[1] == 3
-            assert pred_softmax.shape[0] >= 0
-            sum = np.sum(pred_softmax[:, 1:3], axis=1)
-            assert np.isclose(sum, np.ones_like(sum)).all()
-            moving_confidence = pred_softmax[:, 2]
-            # colors = np.zeros((all_pcs[step].shape[0], 3))
-            # moving_mask = moving_confidence > cfg.moving_thre
-            # colors[moving_mask] = [1, 0, 0]  # Set moving points to red
-            # pcd = o3d.geometry.PointCloud()
-            # pcd.points = o3d.utility.Vector3dVector(all_pcs[step])
-            # pcd.colors = o3d.utility.Vector3dVector(colors)
-            # o3d.visualization.draw_geometries([pcd])
-            # 按照阈值判断哪些是动态物体
-            moving_mask = moving_confidence < cfg.moving_thre
-            all_pcs[step] = all_pcs[step][moving_mask]
-            # print((moving_confidence > cfg.moving_thre).sum().item())
-            # colors = np.zeros((all_pcs[step].shape[0], 3))
-            # pcd = o3d.geometry.PointCloud()
-            # pcd.points = o3d.utility.Vector3dVector(all_pcs[step])
-            # pcd.colors = o3d.utility.Vector3dVector(colors)
-            # o3d.visualization.draw_geometries([pcd])
-            # print(moving_confidence.shape)
-            # print((moving_confidence > cfg.moving_thre).sum().item())
-            # print(all_pcs[step].shape)
-            # all_pcs[step] = all_pcs[step][moving_mask]
-            # print(all_pcs[step].shape)
-    pose_inv = np.linalg.inv(all_poses[0])
-    for i in range(len(all_poses)):
-        if i == 0:
-            accumulate_pcs = all_pcs[0]
-        else:
-            # 计算相对位姿
-            pose_rel = np.dot(pose_inv, all_poses[i])
-            # 将点云的坐标添加一列，变成齐次坐标
-            homogeneous_points = np.column_stack(
-                (all_pcs[i], np.ones(all_pcs[i].shape[0]))
-            )
-            transformed_points = np.dot(homogeneous_points, pose_rel.T)
-            # 去掉最后一列，得到新的点云坐标
-            transformed_points = transformed_points[:, :3]
-            accumulate_pcs = np.vstack((accumulate_pcs, transformed_points))
-    return accumulate_pcs
+    # 현재 프레임의 포인트 클라우드를 변환 (월드 좌표계로)
+    pc = transform_point_cloud(pc, pose, np.eye(4))
+
+    # 이전 프레임들의 포인트 클라우드를 현재 프레임으로 변환
+    past_point_clouds = []
+    for i, (his_pc, his_pose) in enumerate(zip(his_pcs, his_poses)):
+        # 포인트 클라우드 변환 (현재 프레임 좌표계로)
+        transformed_pc = transform_point_cloud(his_pc, his_pose, pose)
+        # 시간 차원 추가 (N, 3) -> (N, 4)
+        time_value = round((i - cfg.stride + 1) * 0.1, 3)
+        time_dim = torch.ones(len(transformed_pc), 1) * time_value
+        transformed_pc = torch.cat([transformed_pc, time_dim], dim=1)
+        past_point_clouds.append(transformed_pc)
+
+    # 모든 포인트 클라우드를 하나로 합침
+    if len(past_point_clouds) > 0:
+        past_point_clouds = torch.cat(past_point_clouds, dim=0)
+        print(f"Past point clouds shape: {past_point_clouds.shape}")
+        # 동적 객체 필터링
+        if cfg.filter_dynamic and mos_model is not None:
+            # 포인트 클라우드를 CUDA로 이동
+            past_point_clouds = past_point_clouds.float().cuda()
+            # 동적 객체 예측
+            logits = mos_model.predict(past_point_clouds)
+            # 동적 객체 마스크 생성
+            mask = logits < 0
+            # 정적 객체만 선택
+            past_point_clouds = past_point_clouds[mask, :3].cpu().numpy()
+    else:
+        past_point_clouds = np.zeros((0, 3))
+
+    # 현재 프레임과 이전 프레임의 포인트 클라우드 합치기
+    if isinstance(pc, torch.Tensor):
+        pc = pc.cpu().numpy()
+    accumulated_pc = np.concatenate([pc, past_point_clouds], axis=0)
+    return accumulated_pc
 
 
 def distance_filter(max_depth, pc):

@@ -204,8 +204,7 @@ class MyAutomaticMaskGenerator:
         )
         concepts, scores = [x for x in (concepts, scores)]
         # 推理captions
-        sem_tokens = outputs["sem_tokens"][mask_index]
-        print("sem_tokens shape:", sem_tokens.shape)  # 디버깅용 shape 출력
+        sem_tokens = outputs["sem_tokens"][mask_index].unsqueeze_(1)
         captions = self.tap_model.generate_text(sem_tokens)
         caption_fts = self.sbert_model.encode(
             captions, convert_to_tensor=True, device="cuda"
