@@ -1,2 +1,0 @@
-[2025-03-28 13:34:10,239][sentence_transformers.SentenceTransformer][INFO] - Use pytorch device_name: cuda
-[2025-03-28 13:34:10,239][sentence_transformers.SentenceTransformer][INFO] - Load pretrained SentenceTransformer: /home/retia/Documents/Simple-OpenGraph/weights/all-MiniLM-L6-v2
