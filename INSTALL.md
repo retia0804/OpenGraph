@@ -28,3 +28,8 @@ pip install "gradio>=4.0.0" gradio-image-prompter  # Tokenize Anything 의존성
 pip install open3d spacy faiss-cpu openai imageio hydra-core distinctipy open_clip-torch "transformers>=4.41.0,<4.50.0"  # OpenGraph 의존성
 ```
 
+## 서드파티 다운로드
+
+```
+git submodule update --init --recursive
+```

@@ -1,0 +1,9 @@
+[submodule "thirdparties/MinkowskiEngine"]
+	path = thirdparties/MinkowskiEngine
+	url = https://github.com/NVIDIA/MinkowskiEngine.git
+[submodule "GroundingDINO"]
+	path = thirdparties/GroundingDINO
+	url = https://github.com/IDEA-Research/GroundingDINO.git
+[submodule "thirdparties/4DMOS"]
+	path = thirdparties/4DMOS
+	url = https://github.com/PRBonn/4DMOS.git
