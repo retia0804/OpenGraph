@@ -106,4 +106,7 @@ PYTHONPATH=$(pwd) python script/main_gen_cap.py
 PYTHONPATH=$(pwd) torchrun --nproc_per_node=1 script/main_gen_pc.py
 PYTHONPATH=$(pwd) python script/build_scenegraph.py
 PYTHONPATH=$(pwd) python script/visualize.py
+PYTHONPATH=$(pwd) python script/gen_lane.py
+PYTHONPATH=$(pwd) python script/gen_all_pc.py
+PYTHONPATH=$(pwd) python script/hierarchical_vis.py
 ```
