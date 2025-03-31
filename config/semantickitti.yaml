@@ -3,7 +3,7 @@ basedir: /home/retia/Datasets/SemanticKitti/sequences/
 sequence: !!str 05
 stride: 10 # 图像间隔
 start: 0
-end: 100
+end: 2760
 
 # 生成caption相关
 save_vis: !!bool False # 是否保存可视化
@@ -57,7 +57,7 @@ gpt_max_num: 30 # gpt一次询问的最大数量，太多了后面的容易出�
 spacy: !!bool True # class_methods=sbert时 是否先使用spacy进行提取
 caption_only: !!bool False # spacy=True时 是否只使用纯caption来对齐class
 openai_key: your_key # gpt4的key
-api_base: your_api # openai国内代理地址
+api_base: https://api.openai.com/v1 # openai国内代理地址
 class_colors_json: ./class_colors/class_colors.json # semantickitti类别及颜色json文件
 
 # 可视化相关
