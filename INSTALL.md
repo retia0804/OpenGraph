@@ -29,7 +29,7 @@ Python, CUDA, Torch 버전에 따라 적합한 버전이 다를 수 있음.
 pip install ninja "numpy>=2.0.0"
 pip install "flash_attn>=2.5.8,<=2.6.3" --no-build-isolation
 pip install "gradio>=4.0.0" gradio-image-prompter  # Tokenize Anything 의존성
-pip install open3d spacy faiss-cpu openai imageio hydra-core distinctipy open_clip-torch "transformers>=4.41.0,<4.50.0"  # OpenGraph 의존성
+pip install open3d spacy faiss-cpu openai imageio hydra-core distinctipy open_clip-torch "transformers>=4.41.0,<4.50.0" openai==0.28  # OpenGraph 의존성
 ```
 
 ## 서드파티 다운로드
@@ -70,26 +70,28 @@ pip install -U sentence-transformers
 pip install git+https://github.com/meta-llama/llama.git
 ```
 
-## MinkowskiEngine 설치 (4DMOS 의존성 패키지)
+## MinkowskiEngine 설치 (4DMOS 의존성 패키지) (OpenGraph를 삭제 후 다시 git clone 하는 경우 여기부터 다시 진행)
 
 `MinkowskiEngineBackend` 폴더가 없으면 빌드 과정 중 실패함.
 
 ```
 mkdir -p thirdparties/MinkowskiEngine/MinkowskiEngineBackend
-pip install -v -e thirdparties/MinkowskiEngine
+pip install -e thirdparties/MinkowskiEngine
 ```
 
 ## 4DMOS 설치
 
 ```
-make -d -C thirdparties/4DMOS install
+make -C thirdparties/4DMOS install
 ```
 
 # 가중치
 
-weights 폴더 생성 후 내부에 다운로드
+weights 폴더 생성 후 내부에 다운로드  
+Hugingface의 경우 Access Tocken을 입력해야 함.
 
 ```
+mkdir -p weights && cd weigths
 wget https://huggingface.co/spaces/xinyu1205/Tag2Text/resolve/main/tag2text_swin_14m.pth
 wget https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth
 wget https://huggingface.co/BAAI/tokenize-anything/resolve/main/models/tap_vit_l_v1_0.pkl
@@ -97,6 +99,7 @@ wget https://huggingface.co/BAAI/tokenize-anything/resolve/main/concepts/merged_
 git clone https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
 git clone https://huggingface.co/meta-llama/Llama-2-7b-chat
 wget https://www.ipb.uni-bonn.de/html/projects/4DMOS/10_scans.zip && unzip 10_scans.zip && rm 10_scans.zip
+cd ..
 ```
 
 # 실행
@@ -108,5 +111,16 @@ PYTHONPATH=$(pwd) python script/build_scenegraph.py
 PYTHONPATH=$(pwd) python script/visualize.py
 PYTHONPATH=$(pwd) python script/gen_lane.py
 PYTHONPATH=$(pwd) python script/gen_all_pc.py
+PYTHONPATH=$(pwd) python script/hierarchical_vis.py
+```
+
+한 번에
+
+```
+PYTHONPATH=$(pwd) python script/main_gen_cap.py && \
+PYTHONPATH=$(pwd) torchrun --nproc_per_node=1 script/main_gen_pc.py && \
+PYTHONPATH=$(pwd) python script/build_scenegraph.py && \
+PYTHONPATH=$(pwd) python script/gen_lane.py && \
+PYTHONPATH=$(pwd) python script/gen_all_pc.py && \
 PYTHONPATH=$(pwd) python script/hierarchical_vis.py
 ```

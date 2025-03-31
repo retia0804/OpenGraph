@@ -3,3 +3,7 @@ weights/
 
 # 출력 결과물
 outputs/
+
+# 파이썬 캐쉬 파일
+*.pyc
+
